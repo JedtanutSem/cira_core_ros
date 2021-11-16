@@ -57,7 +57,7 @@ odom_broadcaster = tf.TransformBroadcaster()
 current_time = rospy.Time.now()
 last_time = rospy.Time.now()
 
-r = rospy.Rate(500000)
+r = rospy.Rate(60)
 
 while not rospy.is_shutdown():
     current_time = rospy.Time.now()
