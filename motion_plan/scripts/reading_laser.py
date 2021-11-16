@@ -30,6 +30,8 @@ def main():
     pub = rospy.Publisher('toCira', String, queue_size=10)
 
     rospy.spin()
+    #test
+    
 
 
 if __name__ == "__main__":
