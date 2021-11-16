@@ -34,9 +34,9 @@ def leftTicksCallback(msg):
     ticks = msg.data
     ticks = ticks.split(",")
     left_ticks_str = ticks[0]
-    left_ticks = int(left_ticks_str)
+    left_ticks = int(left_ticks_str)*2
     right_ticks_str = ticks[1]
-    right_ticks = int(right_ticks_str)
+    right_ticks = int(right_ticks_str)*3
 
 
 def rightTicksCallback(msg):
