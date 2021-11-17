@@ -2,29 +2,46 @@
 import serial
 import rospy
 from std_msgs.msg import String
+import time
+import json
+get_a = 0
+get_b = 0
+get_c = 0
+get_d = 0
 
+def callback(data):
+    global get_a,get_b,get_c,get_d
+    get = data.data
+    json_acceptable_string = get.replace("'", "\"")
+    get = json.loads(json_acceptable_string)
+    get_a = get["a"]
+    get_b = get["b"]
+    get_c = get["c"]
+    get_d = get["d"]
+    #rospy.loginfo(rospy.get_caller_id() + "fromCira %s", get)
 
-
-def main():
-    arduino = serial.Serial('/dev/ttyACM0', 500000, timeout=.1)
-
-
-    pub = rospy.Publisher('serial_read', String, queue_size=10)
-    rospy.init_node('read_ser', anonymous=True)
-    rate = rospy.Rate(500000) # 10hz
-    while not rospy.is_shutdown():
-	    while True:
-                data = arduino.readline()[:-2]
-		#arduino.write(b'hello')
-                if data:
-                    #data = '{'+data+'}'
-                    hello_str = data
-                    rospy.loginfo(hello_str)
-                    pub.publish(hello_str)
-                    rate.sleep()
 
 
 
 
 if __name__ == "__main__":
-    main()
+    arduino = serial.Serial('/dev/ttyACM0', 115200, timeout=.1)
+
+    rospy.Subscriber('chatter', String, callback)
+    pub = rospy.Publisher('serial_read', String, queue_size=10)
+    rospy.init_node('read_ser', anonymous=True)
+    rate = rospy.Rate(10) # 10hz
+
+    while not rospy.is_shutdown():
+
+        str = '%s, %s, %s\n' %(get_a,get_b,get_c)
+        #rospy.loginfo(str)
+        arduino.write(str)
+        data = arduino.readline()[:-2]
+
+        if data:
+            hello_str = data
+            rospy.loginfo(hello_str)
+            pub.publish(hello_str)
+
+rate.sleep()     
