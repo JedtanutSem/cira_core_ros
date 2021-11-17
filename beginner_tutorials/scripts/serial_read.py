@@ -15,6 +15,7 @@ def main():
     while not rospy.is_shutdown():
 	    while True:
                 data = arduino.readline()[:-2]
+		#arduino.write(b'hello')
                 if data:
                     #data = '{'+data+'}'
                     hello_str = data
