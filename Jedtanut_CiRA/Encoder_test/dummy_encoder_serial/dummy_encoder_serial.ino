@@ -20,8 +20,8 @@ void loop()
     current = millis();
     Serial.print(x);
     Serial.print(",");
-    Serial.print(x+5);
-    delayMicroseconds(100);  
+    Serial.print(x);
+    delayMicroseconds(10);  
     Serial.println("");
     
   }
@@ -37,7 +37,7 @@ void loop()
     Serial.print(x);
     Serial.print(",");
     Serial.print(x);
-    delayMicroseconds(100);  
+    delayMicroseconds(10);  
     Serial.println("");
     
   }
