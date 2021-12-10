@@ -1,113 +1,113 @@
-#include <ros/ros.h>
-#include <tf/transform_broadcaster.h>
-#include <nav_msgs/Odometry.h>
-#include "std_msgs/Float32.h"
+#!/usr/bin/env python
+
+import math
+from math import sin, cos, pi
+
+import rospy
+import tf
+from nav_msgs.msg import Odometry
+from std_msgs.msg import Int16,String
+from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
+import json
 
 
-  float x=0;
-  float y=0;
-  float th=0;
+#Parameters
+wheeltrack = 0.143 #distace measure of distance between wheel
+wheelradius = 0.0325
+TPR = 1000 #TPR --> Tick per revolution
+left_ticks = 0
+right_ticks = 0
+last_left_ticks = 0
+last_right_ticks = 0
 
-  float dist_left;
-  float dist_right;
+x = 0.0
+y = 0.0
+th = 0.0
 
-	float encLeft;
-  	float encRight;
-		float encLeft_old;
-  		float encRight_old;
+vx =  0.0
+vy =  0.0
+vth =  0.0
 
-double DistancePerCount = (3.14159265 * 0.16) / 960;
-
-//..................................................................................
-void Enc_L_Callback(const std_msgs::Float32& encL)
-{
-	encLeft=encL.data;
-}
-//..................................................................................
-void Enc_R_Callback(const std_msgs::Float32& encR)
-{
-	encRight=encR.data;
-}
-//..................................................................................
-int main(int argc, char** argv){
-  ros::init(argc, argv, "odometry_publisher");
-
-  ros::NodeHandle n;
-  ros::Publisher odom_pub = n.advertise<nav_msgs::Odometry>("odom", 50);
-
-	ros::Subscriber subL = n.subscribe("Enc_L", 1000, Enc_L_Callback);
-	ros::Subscriber subR = n.subscribe("Enc_R", 1000, Enc_R_Callback);
-  tf::TransformBroadcaster odom_broadcaster;
+def encoder_callback(msg):
+    global left_ticks
+    global right_ticks
+    ticks = msg.data
+    ticks = ticks.split(",")
+    left_ticks_str = ticks[0]
+    left_ticks = int(left_ticks_str)*2
+    right_ticks_str = ticks[1]
+    right_ticks = int(right_ticks_str)*3
 
 
-  ros::Time current_time, last_time;
- current_time = ros::Time::now();
-  last_time = ros::Time::now();
+rospy.init_node('odometry_publisher')
+odom_pub = rospy.Publisher("odom", Odometry, queue_size=50) # odom published
+encoder_sub =rospy.Subscriber("/serial_read", String, encoder_callback) # Encoder count from serial(Controller)
+odom_broadcaster = tf.TransformBroadcaster()
 
-  ros::Rate r(20.0);
-  while(n.ok()){
+current_time = rospy.Time.now()
+last_time = rospy.Time.now()
 
-    ros::spinOnce();               // check for incoming messages
-   	current_time = ros::Time::now();
+r = rospy.Rate(60)
 
-		dist_left = (encLeft-encLeft_old) * DistancePerCount;
-  		dist_right = (encRight-encRight_old) * DistancePerCount;
-	double dist =  (dist_right + dist_left) * 0.5;
-    	double rota = (dist_left - dist_right) / 0.3;
+while not rospy.is_shutdown():
+    current_time = rospy.Time.now()
+    delta_L = left_ticks - last_left_ticks
+    delta_R = right_ticks - last_right_ticks
+    last_left_ticks = left_ticks
+    last_right_ticks = right_ticks
+    dl = 2 * pi * wheelradius * delta_L / TPR # distance of left motor
+    dr = 2 * pi * wheelradius * delta_R / TPR # distance of righr motor
+    dc = (dl + dr) / 2 # center distance
+    dt = (current_time - last_time).to_sec()
+    dth = (dr-dl)/wheeltrack # angular distance (theta)
 
-		encLeft_old = encLeft;
-		encRight_old = encRight;
+    if dr==dl: # when the robot doesn't has angular velocity
+        dx=dr*cos(th)
+        dy=dr*sin(th)
 
-	double dt = (current_time - last_time).toSec();
-    	double delta_x = dist * cos(th + (rota/2.0));
-    	double delta_y = dist * sin(th + (rota/2.0));
-    	double delta_th = rota;
+    else:
+        radius=dc/dth   # curve(dc) = r*theta(dth)
+        #<--calculate icc value-->
+        iccX=x-radius*sin(th)
+        iccY=y+radius*cos(th)
+
+        dx = cos(dth) * (x-iccX) - sin(dth) * (y-iccY) + iccX - x
+        dy = sin(dth) * (x-iccX) + cos(dt) * (y-iccY) + iccY - y
+
+    x += dx
+    y += dy
+    th =(th+dth) %  (2 * pi) # euler angle round z axis
+
+    # <--Quaternion coordinate odom-->
+    odom_quat = tf.transformations.quaternion_from_euler(0, 0, th) # only z axis (robot rotate)
+
+    # first, we'll publish the transform over tf
+    odom_broadcaster.sendTransform(
+       (x, y, 0.),
+       odom_quat,
+       current_time,
+       "base_link",
+       "odom"
+    )
+
+    # next, we'll publish the odometry message over ROS
+    odom = Odometry()
+    odom.header.stamp = current_time
+    odom.header.frame_id = "odom"
+
+    odom.pose.pose = Pose(Point(x, y, 0.), Quaternion(*odom_quat))
+
+    if dt>0:
+       vx=dx/dt
+       vy=dy/dt
+       vth=dth/dt
+
+    odom.child_frame_id = "base_link"
+    odom.twist.twist = Twist(Vector3(vx, vy, 0), Vector3(0, 0, vth))
+
+    odom_pub.publish(odom)
 
 
-    //compute odometry in a typical way given the velocities of the robot
-   	x += delta_x;
-    	y += delta_y;
-    	th += delta_th;
-
-    //since all odometry is 6DOF we'll need a quaternion created from yaw
-    geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(th);
-
-    //first, we'll publish the transform over tf
-    geometry_msgs::TransformStamped odom_trans;
-    odom_trans.header.stamp = ros::Time::now();
-    odom_trans.header.frame_id = "odom";
-    odom_trans.child_frame_id = "base_link";
-
-    odom_trans.transform.translation.x = x;
-    odom_trans.transform.translation.y = y;
-    odom_trans.transform.translation.z = 0.0;
-    odom_trans.transform.rotation = odom_quat;
-
-    //send the transform
-    odom_broadcaster.sendTransform(odom_trans);
-
-    //next, we'll publish the odometry message over ROS
-    nav_msgs::Odometry odom;
-    odom.header.stamp = ros::Time::now();
-    odom.header.frame_id = "odom";
-
-    //set the position
-    odom.pose.pose.position.x = x;
-    odom.pose.pose.position.y = y;
-    odom.pose.pose.position.z = 0.0;
-    odom.pose.pose.orientation = odom_quat;
-
-    //set the velocity
-    odom.child_frame_id = "base_link";
-    odom.twist.twist.linear.x = delta_x/dt;
-    odom.twist.twist.linear.y = delta_y/dt;
-    odom.twist.twist.angular.z = delta_th/dt;
-
-    //publish the message
-    odom_pub.publish(odom);
-
-    	last_time = current_time;
-
-    r.sleep();
-  }
-}
+    rospy.loginfo("left %d and right %d",left_ticks,right_ticks)
+    last_time = current_time
+    r.sleep()
