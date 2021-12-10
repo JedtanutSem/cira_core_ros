@@ -5,9 +5,9 @@ import json
 
 def callback(data):
     get = data.data
-    json_acceptable_string = get.replace("'", "\"")
-    get = json.loads(json_acceptable_string)
-    get = get["a"]
+    json_acceptable_string = get.replace("'", "\"") #convert JSON 
+    get = json.loads(json_acceptable_string) #JSON --> String
+    get = get["a"] #Example is A --> Dict
     rospy.loginfo(rospy.get_caller_id() + "fromCira %s", get)
 
 def cira_listen():
