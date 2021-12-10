@@ -12,9 +12,9 @@ import json
 
 
 #Parameters
-wheeltrack = 0.143
+wheeltrack = 0.143 #distace measure of distance between wheel
 wheelradius = 0.0325
-TPR = 1000
+TPR = 1000 #TPR --> Tick per revolution
 left_ticks = 0
 right_ticks = 0
 last_left_ticks = 0
@@ -28,7 +28,7 @@ vx =  0.0
 vy =  0.0
 vth =  0.0
 
-def leftTicksCallback(msg):
+def encoder_callback(msg):
     global left_ticks
     global right_ticks
     ticks = msg.data
@@ -39,19 +39,9 @@ def leftTicksCallback(msg):
     right_ticks = int(right_ticks_str)*3
 
 
-def rightTicksCallback(msg):
-    global right_ticks
-    right_ticks = msg.data
-    json_acceptable_string = right_ticks.replace("'", "\"")
-    right_ticks = json.loads(json_acceptable_string)
-    right_ticks = right_ticks["right"]
-    right_ticks = int(right_ticks)
-    #rospy.loginfo(right_ticks)
 rospy.init_node('odometry_publisher')
-
-odom_pub = rospy.Publisher("odom", Odometry, queue_size=50)
-left_ticks_sub =rospy.Subscriber("/serial_read", String, leftTicksCallback)
-#right_ticks_sub =rospy.Subscriber("/right_ticks", String, rightTicksCallback)
+odom_pub = rospy.Publisher("odom", Odometry, queue_size=50) # odom published
+encoder_sub =rospy.Subscriber("/serial_read", String, encoder_callback) # Encoder count from serial(Controller)
 odom_broadcaster = tf.TransformBroadcaster()
 
 current_time = rospy.Time.now()
@@ -61,24 +51,23 @@ r = rospy.Rate(60)
 
 while not rospy.is_shutdown():
     current_time = rospy.Time.now()
-
     delta_L = left_ticks - last_left_ticks
     delta_R = right_ticks - last_right_ticks
     last_left_ticks = left_ticks
     last_right_ticks = right_ticks
-    dl = 2 * pi * wheelradius * delta_L / TPR
-    dr = 2 * pi * wheelradius * delta_R / TPR
-    dc = (dl + dr) / 2
+    dl = 2 * pi * wheelradius * delta_L / TPR # distance of left motor
+    dr = 2 * pi * wheelradius * delta_R / TPR # distance of righr motor
+    dc = (dl + dr) / 2 # center distance
     dt = (current_time - last_time).to_sec()
-    dth = (dr-dl)/wheeltrack
+    dth = (dr-dl)/wheeltrack # angular distance (theta)
 
-    if dr==dl:
+    if dr==dl: # when the robot doesn't has angular velocity
         dx=dr*cos(th)
         dy=dr*sin(th)
 
     else:
-        radius=dc/dth
-
+        radius=dc/dth   # curve(dc) = r*theta(dth)
+        #<--calculate icc value-->
         iccX=x-radius*sin(th)
         iccY=y+radius*cos(th)
 
@@ -87,9 +76,10 @@ while not rospy.is_shutdown():
 
     x += dx
     y += dy
-    th =(th+dth) %  (2 * pi)
+    th =(th+dth) %  (2 * pi) # euler angle round z axis
 
-    odom_quat = tf.transformations.quaternion_from_euler(0, 0, th)
+    # <--Quaternion coordinate odom-->
+    odom_quat = tf.transformations.quaternion_from_euler(0, 0, th) # only z axis (robot rotate)
 
     # first, we'll publish the transform over tf
     odom_broadcaster.sendTransform(
