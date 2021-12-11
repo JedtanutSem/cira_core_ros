@@ -1,0 +1,1 @@
+gnome-terminal -e 'python '/home/jedtanut/Desktop/Smart_agri/turtlebot_autorun_slam.py''

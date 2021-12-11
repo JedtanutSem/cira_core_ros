@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0.0
+Name=ROS CORE
+Comment=I AM ROS CORE
+Exec=bash -c 'source /opt/ros/melodic/setup.bash && source ~/catkin_ws/devel/setup.bash --extend && roslaunch beginner_tutorials serial_read_write.launch'
+Icon=ros_core.png
+Terminal=true
+Type=Application
+Categories=Application;
+Name[en_US]=serial_read_write_launch

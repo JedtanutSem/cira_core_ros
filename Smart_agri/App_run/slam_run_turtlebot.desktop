@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0.0
+Name=ROS CORE
+Comment=I AM ROS CORE
+Exec=gnome-terminal -e 'python '/home/jedtanut/Desktop/Smart_agri/Autorun/turtlebot_autorun_slam.py''
+Icon=ros_core.png
+Terminal=true
+Type=Application
+Categories=Application;
+Name[en_US]=slam_run_turtlebot

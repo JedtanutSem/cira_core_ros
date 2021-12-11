@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0.0
+Name=ROS CORE
+Comment=I AM ROS CORE
+Exec=bash -c 'LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib && source /opt/ros/melodic/setup.bash && roscore ;$SHELL'
+Icon=ros_core.png
+Terminal=true
+Type=Application
+Categories=Application;
+Name[en_US]=ROS CORE
