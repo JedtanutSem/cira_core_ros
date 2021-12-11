@@ -1,0 +1,5 @@
+<launch>
+  <node pkg = "beginner_tutorials" type = "serial_read.py" name = "serial_read" output="screen"/>
+  
+
+</launch>

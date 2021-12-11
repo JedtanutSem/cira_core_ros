@@ -1,4 +1,4 @@
-beginner_tutorialscmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.0.2)
 project(beginner_tutorials)
 
 ## Compile as C++11, supported in ROS Kinetic and newer

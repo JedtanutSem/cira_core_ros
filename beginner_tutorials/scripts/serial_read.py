@@ -41,6 +41,6 @@ if __name__ == "__main__":
 
         if data:
             hello_str = data
-            rospy.loginfo(hello_str)
+            #rospy.loginfo(hello_str)
             pub.publish(hello_str)
             rate.sleep()

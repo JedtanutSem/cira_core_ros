@@ -34,9 +34,9 @@ def encoder_callback(msg):
     ticks = msg.data
     ticks = ticks.split(",")
     left_ticks_str = ticks[0]
-    left_ticks = int(left_ticks_str)*2
+    left_ticks = int(left_ticks_str)
     right_ticks_str = ticks[1]
-    right_ticks = int(right_ticks_str)*3
+    right_ticks = int(right_ticks_str)
 
 
 rospy.init_node('odometry_publisher')
@@ -47,7 +47,7 @@ odom_broadcaster = tf.TransformBroadcaster()
 current_time = rospy.Time.now()
 last_time = rospy.Time.now()
 
-r = rospy.Rate(60)
+r = rospy.Rate(300)
 
 while not rospy.is_shutdown():
     current_time = rospy.Time.now()
@@ -108,6 +108,6 @@ while not rospy.is_shutdown():
     odom_pub.publish(odom)
 
 
-    rospy.loginfo("left %d and right %d",left_ticks,right_ticks)
+    #rospy.loginfo("left %d and right %d",left_ticks,right_ticks)
     last_time = current_time
     r.sleep()
