@@ -1,27 +1,31 @@
 import serial
 import time
-ser = serial.Serial(
-    port='/dev/ttyACM0',\
-    baudrate=9600,\
-    parity=serial.PARITY_NONE,\
-    stopbits=serial.STOPBITS_ONE,\
-    bytesize=serial.EIGHTBITS,\
-        timeout=0)
 
-print("connected to: " + ser.portstr)
+def serial_test():
+    ser = serial.Serial(
+        port='/dev/ttyACM0',\
+        baudrate=9600,\
+        parity=serial.PARITY_NONE,\
+        stopbits=serial.STOPBITS_ONE,\
+        bytesize=serial.EIGHTBITS,\
+            timeout=0)
 
-#this will store the line
-line = []
+    print("connected to: " + ser.portstr)
 
-while True:
-    for c in ser.read():
-        line.append(c)
-        byte_bit = bin(c)
-        
-        print(int(byte_bit[7]))
-        print(byte_bit)
-        time.sleep(1)
-        
-        
+    #this will store the line
+    line = []
 
-ser.close()
+    while True:
+        for c in ser.read():
+            line.append(c)
+            byte_bit = bin(c)
+            
+            print(int(byte_bit[7]))
+            print(byte_bit)
+            time.sleep(1)
+    ser.close()
+if __name__ == "__main__":
+    try:
+        serial_test()
+    except:
+        print("Check Port")
